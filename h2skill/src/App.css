@@ -1,3 +1,30 @@
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.user-name {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  color: var(--accent-1);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  transition: color 0.3s ease;
+}
+
+.logout-btn:hover {
+  color: var(--accent-2);
+}
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;

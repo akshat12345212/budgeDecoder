@@ -15,9 +15,22 @@ const getIcon = (iconName) => {
 
 export default function Home() {
   return (
-    <div className="container animate-fade-in">
-      <div className="flex-col items-center text-center" style={{ padding: '4rem 0', gap: '2rem' }}>
-        <h1 className="animate-fade-in">Decoding Union Budget 2026</h1>
+    <div className="container animate-fade-in" style={{ position: 'relative' }}>
+      <div className="flex-col items-center text-center" style={{ padding: '2rem 0 4rem 0', gap: '2rem', position: 'relative', zIndex: 10 }}>
+        
+        {/* 3D Geometric Figure */}
+        <div className="scene-3d animate-fade-in">
+          <div className="cube-3d">
+            <div className="cube-face front">₹</div>
+            <div className="cube-face back">26</div>
+            <div className="cube-face right">📈</div>
+            <div className="cube-face left">💼</div>
+            <div className="cube-face top">🏛️</div>
+            <div className="cube-face bottom">⚡</div>
+          </div>
+        </div>
+
+        <h1 className="animate-fade-in delay-100" style={{ marginTop: '-1rem' }}>Decoding Union Budget 2026</h1>
         <p style={{ maxWidth: '800px', fontSize: '1.25rem', margin: '0 auto' }} className="animate-fade-in delay-100">
           We strip away the financial jargon to help you understand exactly how India's latest budget impacts your wallet, your business, and the nation's future.
         </p>
