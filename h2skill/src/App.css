@@ -9,6 +9,16 @@
   color: var(--text-secondary);
   font-size: 14px;
 }
+.logout-button{
+  background: none;
+  border: none;
+  color: var(--accent-1);
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  transition: color 0.3s ease;
+}
 
 .logout-btn {
   background: none;

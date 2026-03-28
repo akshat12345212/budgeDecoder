@@ -2,14 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { MessageSquare, X, Send, Bot, Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-// Initialize Gemini
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY || '');
-const model = genAI.getGenerativeModel({ 
-  model: 'gemini-1.5-flash',
-  systemInstruction: "You are the Budget 2026 Assistant, a professional financial analyst for the India Union Budget 2026. You explain budget implications clearly, concisely, and professionally to citizens, businesses, and investors. Format your responses with markdown (bolding key terms, using bullet points). Be helpful, precise, and polite."
-});
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,11 +10,42 @@ export default function Chatbot() {
   const [messages, setMessages] = useState([
     { sender: 'bot', text: 'Hi! I am your Budget 2026 AI Assistant. Ask me anything about the new tax slabs, startups, agriculture, or any budget policies.' }
   ]);
+  const [sessionId] = useState(() => {
+    let sid = localStorage.getItem('budget_sessionId');
+    if (!sid) {
+      sid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(7);
+      localStorage.setItem('budget_sessionId', sid);
+    }
+    return sid;
+  });
+
   const messagesEndRef = useRef(null);
+  const chatEndpoint = import.meta.env.VITE_CHAT_PROXY_URL || '/api/chat';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch(`${chatEndpoint}/${sessionId}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.history && data.history.length > 0) {
+            setMessages(data.history.map(m => ({
+              sender: m.role === 'model' ? 'bot' : 'user',
+              text: m.text || m.parts?.[0]?.text
+            })));
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching chat history', e);
+      }
+    };
+    fetchHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -47,25 +70,25 @@ export default function Chatbot() {
     setIsLoading(true);
 
     try {
-      if (!import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GEMINI_API_KEY === 'YOUR_API_KEY_HERE') {
-         setMessages(prev => [...prev, { sender: 'bot', text: "**Configuration Error**: Gemini API key is missing. Please add a valid `VITE_GEMINI_API_KEY` to your `.env` file and restart the development server." }]);
-         setIsLoading(false);
-         return;
-      }
-      
-      const chatHistory = messages.filter(m => m.sender !== 'error').map(m => ({
-        role: m.sender === 'bot' ? 'model' : 'user',
-        parts: [{ text: m.text }],
-      }));
+      const historyBase = [...messages, { sender: 'user', text: userMsg }]
+        .filter(m => m.sender !== 'error')
+        .map(m => ({
+          role: m.sender === 'bot' ? 'model' : 'user',
+          parts: [{ text: m.text }],
+        }));
 
-      const chat = model.startChat({
-        history: chatHistory.slice(1) // Keep history without the first hardcoded greeting message to prevent mismatched sequence
+      const response = await fetch(chatEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userMsg, sessionId, history: historyBase.slice(1) })
       });
 
-      const result = await chat.sendMessage(userMsg);
-      const output = result.response.text();
+      if (!response.ok) {
+        throw new Error(`Chat proxy error: ${response.status} ${response.statusText}`);
+      }
 
-      setMessages(prev => [...prev, { sender: 'bot', text: output }]);
+      const { text } = await response.json();
+      setMessages(prev => [...prev, { sender: 'bot', text: text ?? "I'm sorry, I did not get a response." }]);
     } catch (error) {
       console.error(error);
       setMessages(prev => [...prev, { sender: 'bot', text: "I'm sorry, I encountered an error connecting to the AI model. Please try again later." }]);

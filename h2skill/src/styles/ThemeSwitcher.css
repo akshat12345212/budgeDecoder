@@ -1,5 +1,7 @@
 .theme-switcher {
-  position: relative;
+  position: absolute;
+  right:20px;
+  top:20px;
   display: inline-block;
 }
 
